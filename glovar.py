@@ -1,6 +1,8 @@
 """Global variables."""
+import os
 
 
-DATA_DIR = 'home/hanshan/dev/data/'
-PKL_DIR = 'home/hanshan/dev/cstlstm/pickles/'
-GLOVE_DIR = 'home/hanshan/dev/data/glove.840B.300d.txt'
+APP_DIR = os.getcwd()
+DATA_DIR = '/home/hanshan/dev/data/'
+PKL_DIR = os.path.join(APP_DIR, 'pickles/')
+GLOVE_DIR = '/home/hanshan/dev/data/glove/glove.840B.300d.txt'

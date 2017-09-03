@@ -2,11 +2,16 @@
 from ext import vocab_emb, pickling
 from data import sst
 import glovar
+import os
+
+
+if not os.path.exists(glovar.PKL_DIR):
+    os.makedirs(glovar.PKL_DIR)
 
 
 # Create the vocab dictionary
 print('Creating vocab dict...')
-data = sst.data()
+data = sst.parsed_data()
 all_data = data['train'] + data['dev'] + data['test']
 all_text = ' '.join([s['text'] for s in all_data])
 vocab_dict, _ = vocab_emb.create_vocab_dict(all_text)

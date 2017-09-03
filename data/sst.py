@@ -5,9 +5,11 @@ import numpy as np
 import spacy
 from ext import tree_batch, pickling
 import glovar
+import os
 
 
 NLP = spacy.load('en')
+SST_DIR = os.path.join(glovar.DATA_DIR, 'sst/')
 
 
 class Batch:
@@ -76,7 +78,7 @@ def raw_data():
     data = {}
     files = ['train.txt', 'dev.txt', 'test.txt']
     for file in files:
-        with open(glovar.DATA_DIR + file) as f:
+        with open(SST_DIR + file, 'r') as f:
             lines = f.readlines()
             lines = [l.rstrip() for l in lines]
             data[file.split('.')[0]] = lines
