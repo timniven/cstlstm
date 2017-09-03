@@ -41,7 +41,7 @@ class SentimentModel(nn.Module):
         self.logits_layer = nn.Linear(self.hidden_size, 5).cuda()
 
         # Define optimizer.
-        params = [{'params': self.encoder.parameters()},  # TODO: double check these params are all registered properly
+        params = [{'params': self.encoder.cell.parameters()},
                   {'params': self.fc1.parameters()},
                   {'params': self.fc2.parameters()},
                   {'params': self.logits_layer.parameters()}]

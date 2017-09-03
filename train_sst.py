@@ -22,10 +22,10 @@ for key in sorted(list(config.keys())):
     print('\t%s \t%s%s' % (key, '\t' if len(key) < 15 else '', config[key]))
 
 print('Load embedding matrix...')
-embedding_matrix = pickling.load(glovar.PKL_DIR, 'glove_embeddings.pkl')
+embedding_matrix = pickling.load(glovar.PKL_DIR, 'glove_embeddings.pkl')[0]
 
 print('Loading data...')
-train_data, dev_data = sst.data()
+train_data, dev_data, _ = sst.data()
 train_loader = sst.get_data_loader(train_data, config.batch_size)
 dev_loader = sst.get_data_loader(dev_data, config.batch_size)
 

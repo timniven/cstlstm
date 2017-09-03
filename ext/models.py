@@ -7,7 +7,7 @@ _DEFAULT_CONFIG = {
     'embed_size': 300,
     'hidden_size': 300,
     'projection_size': 200,
-    'learning_rate': 1e-4,
+    'learning_rate': 1e-3,
     'grad_clip_norm': 0.0,
     '_lambda': 0.0,
     'p_keep_input': 0.9,

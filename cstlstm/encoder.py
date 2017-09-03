@@ -1,7 +1,7 @@
-"""Vanilla Child-Sum Tree-LSTM model"""
+"""Child-Sum Tree-LSTM batch sentence encoder module."""
 import torch
 import torch.nn as nn
-from pytorch import prev_states, cell
+from cstlstm import prev_states, cell
 from torch.autograd import Variable
 
 

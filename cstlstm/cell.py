@@ -37,23 +37,22 @@ class BatchChildSumTreeLSTMCell(nn.Module):
         self.dropout = nn.Dropout(p=p_dropout)
         self.W_combined = nn.Parameter(
             torch.Tensor(input_size + hidden_size, 3 * hidden_size),
-            requires_grad=True).cuda()
+            requires_grad=True)
         self.b_combined = nn.Parameter(
             torch.zeros(1, 3 * hidden_size),
-            requires_grad=True).cuda()
+            requires_grad=True)
         self.W_f = nn.Parameter(
             torch.Tensor(input_size, hidden_size),
-            requires_grad=True).cuda()
+            requires_grad=True)
         self.U_f = nn.Parameter(
             torch.Tensor(input_size, hidden_size),
-            requires_grad=True).cuda()
+            requires_grad=True)
         self.b_f = nn.Parameter(
             torch.zeros(1, hidden_size),
-            requires_grad=True).cuda()
+            requires_grad=True)
         nn.init.xavier_uniform(self.W_combined, gain=1.0)
         nn.init.xavier_uniform(self.W_f, gain=1.0)
         nn.init.xavier_uniform(self.U_f, gain=1.0)
-        # TO DO: confirm biases are initialized to zero.
 
     def forward(self, inputs, previous_states):
         """Calculate the next hidden state given the inputs.
