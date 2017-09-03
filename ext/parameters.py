@@ -1,27 +1,28 @@
 """Various configuration settings and mappings."""
 import argparse
+from ext import models
 
 
 class Params:
-    def __init__(self, model_type, name, override):
-        self.model_type = model_type
+    def __init__(self, name, override):
         self.name = name
         self.override = override
 
 
-def parse_arguments(model_types, base_config):
+def parse_arguments():
+    base_config = models.Config()
     parser = argparse.ArgumentParser()
-    parser.add_argument('model_type',
-                        choices=[m for m in model_types],
-                        help='The type of model, e.g. parikh.')
     parser.add_argument('name',
                         type=str,
                         help='The name for the training run (unique).')
     parser.add_argument('--override',
                         action='store_true',
                         help='Set true to overwrite an old history.')
+    parser.add_argument('--tune_embeddings',
+                        action='store_true',
+                        help='Set true to tune embeddings.')
     arg_config = {}
-    for key in base_config.keys():
+    for key in [k for k in base_config.keys() if k != 'tune_embeddings']:
         parser.add_argument(
             '--%s' % key,
             help='Set config.%s' % key,
@@ -29,7 +30,6 @@ def parse_arguments(model_types, base_config):
         arg_config[key] = base_config[key]
     args = parser.parse_args()
     params = Params(
-        args.model_type,
         args.name,
         args.override)
     for key in base_config.keys():

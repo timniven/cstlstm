@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+from torch.autograd import Variable
 from cstlstm import encoder
 
 
@@ -63,7 +64,16 @@ class SentimentModel(nn.Module):
         return predictions.eq(labels)
 
     def forward(self, batch):
-        return self.logits(batch)
+        self.batch = batch
+        labels = Variable(
+            torch.from_numpy(batch.labels),
+            requires_grad=False).cuda()
+        logits = self.logits(batch)
+        loss = self.loss(logits, labels)
+        predictions = self.predictions(logits).type_as(labels)
+        correct = self.correct_predictions(predictions, labels)
+        accuracy = self.accuracy(correct)[0]
+        return predictions, loss, accuracy
 
     def logits(self, batch):
         encoded_sents = self.encoder.forward(batch.forest.nodes,

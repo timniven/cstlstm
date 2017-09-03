@@ -1,10 +1,12 @@
 """Train Child-Sum Tree-LSTM model on the Stanford Sentiment Treebank."""
 from data import sst
 from cstlstm import sentiment
+from ext import parameters, pickling, training
+import glovar
 
 
 # Parse configuration settings from command line
-params, arg_config = configuration.parse_arguments()
+params, arg_config = parameters.parse_arguments()
 print('Getting or creating History...')
 history_exists = dbi.history.train.exists(_id=params.name)
 print('History exists: %s' % history_exists)
@@ -19,28 +21,24 @@ for key in sorted(list(config.keys())):
     print('\t%s \t%s%s' % (key, '\t' if len(key) < 15 else '', config[key]))
 
 
-# Load embedding matrix
 print('Load embedding matrix...')
-embedding_matrix = None
+embedding_matrix = pickling.load(glovar.PKL_DIR, 'glove_embeddings.pkl')
 
 
-# Load data
 print('Loading data...')
 train_data, dev_data = sst.data()
 train_loader = sst.get_data_loader(train_data, config.batch_size)
 dev_loader = sst.get_data_loader(dev_data, config.batch_size)
 
 
-# Load model
 print('Loading model...')
 model = sentiment.SentimentModel(config, embedding_matrix)
 
 
-# Load trainer
 print('Loading trainer...')
-trainer = None
+trainer = training.PyTorchTrainer(
+    model, history, train_loader, dev_loader, glovar.CKPT_DIR)
 
 
-# Train
 print('Training...')
 trainer.train()
