@@ -32,7 +32,8 @@ def _print_dividing_lines():
 
 def _print_epoch_start(epoch):
     _print_dividing_lines()
-    print('Epoch %s\t\tloss\t\taccuracy\tavg(t)\t\tremaining' % epoch)
+    print('Epoch %s\t\tloss\t(avg.)\t\tacc\t(avg.)\tt(avg.)\t\tremaining'
+          % epoch)
     _print_dividing_lines()
 
 
@@ -84,7 +85,7 @@ class TrainerBase:
         time_taken = self.step_end - self.step_start
         global_step, avg_time, avg_loss, avg_acc = \
             self.history.end_step(time_taken, loss, acc)
-        self._report_step(global_step, avg_loss, avg_acc, avg_time)
+        self._report_step(global_step, loss, avg_loss, acc, avg_acc, avg_time)
 
     def _load_last(self):
         raise NotImplementedError('Deriving classes must implement.')
@@ -99,7 +100,7 @@ class TrainerBase:
 
     def _report_epoch(self, avg_time, change_loss, change_acc):
         _print_dividing_lines()
-        print('\t\t%s%10.5f\t%s%6.4f%%\t%s\t'
+        print('\t\t\t%s%10.5f\t\t%s%6.4f%%\t%s\t'
               % ('+' if change_loss > 0 else '',
                  change_loss,
                  '+' if change_acc > 0 else '',
@@ -110,15 +111,19 @@ class TrainerBase:
     def report_every(self):
         return int(np.floor(self.batches_per_epoch / 10))
 
-    def _report_step(self, global_step, avg_loss, avg_acc, avg_time):
+    def _report_step(self, global_step, loss, avg_loss, acc, avg_acc, avg_time):
         if global_step % self.report_every == 0:
             print('%s%%:\t\t'
                   '%8.5f\t'
+                  '%8.5f\t'
+                  '%6.4f%%\t'
                   '%6.4f%%\t'
                   '%s\t'
                   '%s'
                   % (self.progress_percent,
+                     loss,
                      avg_loss,
+                     acc * 100,
                      avg_acc * 100,
                      pretty_time(avg_time),
                      pretty_time(avg_time * self.steps_remaining)))
