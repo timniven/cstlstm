@@ -105,7 +105,5 @@ histories/
 pickles/
 main.py
 scratch.py
-ng.py
 prep.py
 eval.py
-*.ipynb
