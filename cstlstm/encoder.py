@@ -8,7 +8,7 @@ from torch.autograd import Variable
 class ChildSumTreeLSTMEncoder(nn.Module):
     """Child-Sum Tree-LSTM Encoder Module.
 
-    This module encodes sentences, returning hidden states for all nodes.
+    This module encodes sentences, returning hidden states for each sentence.
     """
 
     def __init__(self, embed_size, hidden_size, embedding,

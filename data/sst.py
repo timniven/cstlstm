@@ -3,23 +3,47 @@ from nltk.tokenize import sexpr
 from torch.utils.data import dataset, dataloader
 import numpy as np
 import spacy
-from ext import tree_batch
+from ext import tree_batch, pickling
+import glovar
 
 
-DATA_DIR = 'D:\\dev\\data\\sst\\'
 NLP = spacy.load('en')
+# This needs to be created beforehand - see pre_process.py
+VOCAB_DICT = pickling.load(glovar.PKL_DIR, 'vocab_dict.pkl')
+
+
+class Batch:
+    """Batch object for this data."""
+
+    def __init__(self, forest, labels):
+        self.forest = forest
+        self.labels = labels
 
 
 def collate(batch_data):
+    """For collating a batch of trees.
+
+    Args:
+      batch_data: List of JSON objects.
+
+    Returns:
+      Batch object wrapping the labels and forest.
+    """
+    # Get the labels, and convert text to SpaCy docs.
     labels = np.array([s['label'] for s in batch_data])
     sents = [NLP(s['text'] for s in batch_data)]
+
+    # Generate the forest.
     trees = [tree_batch.sent_to_tree(s) for s in sents]
     forest = tree_batch.Forest(trees)
-    # need to create emb_mat and voc_dic
-    # then I can define on a node in tree-Batch a vocab_ix
-    # and do the dictionary lookup here
-    # might save a smidgeon of time during training
-    return forest, labels
+
+    # Pre-emptively perform dictionary lookup to save time.
+    for level in range(forest.max_level + 1):
+        for node in forest.nodes[level]:
+            node.vocab_ix = VOCAB_DICT[node.token]
+
+    # Wrap up a batch object and return.
+    return Batch(forest, labels)
 
 
 def data():
@@ -75,7 +99,7 @@ def raw_data():
     data = {}
     files = ['train.txt', 'dev.txt', 'test.txt']
     for file in files:
-        with open(DATA_DIR + file) as f:
+        with open(glovar.DATA_DIR + file) as f:
             lines = f.readlines()
             lines = [l.rstrip() for l in lines]
             data[file.split('.')[0]] = lines
@@ -83,6 +107,8 @@ def raw_data():
 
 
 class SSTDataset(dataset.Dataset):
+    """Dataset wrapper for the Stanford Sentiment Treebank."""
+
     def __init__(self, data):
         super(SSTDataset, self).__init__()
         self.data = list(data)
@@ -96,6 +122,8 @@ class SSTDataset(dataset.Dataset):
 
 
 class Stack:
+    # Internal utility class for parsing sexprs in the correct order.
+
     def __init__(self):
         self.items = []
 

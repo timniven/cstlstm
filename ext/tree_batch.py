@@ -243,6 +243,7 @@ class Node:
         self.level = level
         self.is_leaf = is_leaf
         self.has_token = token is not None
+        self.vocab_ix = None  # For vocab_dict index
 
     def __repr__(self):
         return '\n'.join(['%s: %s' % (key, value)
