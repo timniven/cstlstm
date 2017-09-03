@@ -8,8 +8,6 @@ import glovar
 
 
 NLP = spacy.load('en')
-# This needs to be created beforehand - see pre_process.py
-VOCAB_DICT = pickling.load(glovar.PKL_DIR, 'vocab_dict.pkl')
 
 
 class Batch:
@@ -20,37 +18,12 @@ class Batch:
         self.labels = labels
 
 
-def collate(batch_data):
-    """For collating a batch of trees.
-
-    Args:
-      batch_data: List of JSON objects.
-
-    Returns:
-      Batch object wrapping the labels and forest.
-    """
-    # Get the labels, and convert text to SpaCy docs.
-    labels = np.array([s['label'] for s in batch_data])
-    sents = [NLP(s['text'] for s in batch_data)]
-
-    # Generate the forest.
-    trees = [tree_batch.sent_to_tree(s) for s in sents]
-    forest = tree_batch.Forest(trees)
-
-    # Pre-emptively perform dictionary lookup to save time.
-    for level in range(forest.max_level + 1):
-        for node in forest.nodes[level]:
-            node.vocab_ix = VOCAB_DICT[node.token]
-
-    # Wrap up a batch object and return.
-    return Batch(forest, labels)
-
-
 def data():
+    vocab_dict = load_vocab_dict()
     parsed = parsed_data()
-    train = SSTDataset(parsed['train'])
-    dev = SSTDataset(parsed['dev'])
-    test = SSTDataset(parsed['test'])
+    train = SSTDataset(parsed['train'], vocab_dict)
+    dev = SSTDataset(parsed['dev'], vocab_dict)
+    test = SSTDataset(parsed['test'], vocab_dict)
     return train, dev, test
 
 
@@ -60,7 +33,11 @@ def get_data_loader(data_set, batch_size):
         batch_size,
         shuffle=True,
         num_workers=4,
-        collate_fn=collate)
+        collate_fn=data_set.collate)
+
+
+def load_vocab_dict():
+    return pickling.load(glovar.PKL_DIR, 'vocab_dict.pkl')
 
 
 def parse(root_sexpr):
@@ -109,7 +86,7 @@ def raw_data():
 class SSTDataset(dataset.Dataset):
     """Dataset wrapper for the Stanford Sentiment Treebank."""
 
-    def __init__(self, data):
+    def __init__(self, data, vocab_dict):
         super(SSTDataset, self).__init__()
         self.data = list(data)
         self.len = len(self.data)
@@ -119,6 +96,31 @@ class SSTDataset(dataset.Dataset):
 
     def __len__(self):
         return self.len
+
+    def collate(self, batch_data):
+        """For collating a batch of trees.
+
+        Args:
+          batch_data: List of JSON objects.
+
+        Returns:
+          Batch object wrapping the labels and forest.
+        """
+        # Get the labels, and convert text to SpaCy docs.
+        labels = np.array([s['label'] for s in batch_data])
+        sents = [NLP(s['text'] for s in batch_data)]
+
+        # Generate the forest.
+        trees = [tree_batch.sent_to_tree(s) for s in sents]
+        forest = tree_batch.Forest(trees)
+
+        # Pre-emptively perform dictionary lookup to save time.
+        for level in range(forest.max_level + 1):
+            for node in forest.nodes[level]:
+                node.vocab_ix = self.vocab_dict[node.token]
+
+        # Wrap up a batch object and return.
+        return Batch(forest, labels)
 
 
 class Stack:
