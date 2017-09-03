@@ -100,10 +100,10 @@ ENV/
 graphs/
 logs/
 checkpoints/
-data/
 histories/
 pickles/
 main.py
 scratch.py
 prep.py
 eval.py
+kai/
