@@ -84,7 +84,7 @@ class SentimentModel(nn.Module):
         return logits
 
     def loss(self, logits, labels):
-        criterion = torch.nn.CrossEntropyLoss().cuda()
+        criterion = torch.nn.CrossEntropyLoss().cuda()  # move this fella out
         loss = criterion(logits, labels)
         return loss
 

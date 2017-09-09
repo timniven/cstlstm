@@ -1,6 +1,7 @@
 """For tracking and saving training histories."""
 import numpy as np
 from ext import pickling
+import glovar
 
 
 class History:
@@ -83,16 +84,12 @@ class History:
             return series[0]
 
     @staticmethod
-    def load(pkl_dir, name):
+    def load(name):
         pkl_name = 'history_%s.pkl' % name
-        return pickling.load(pkl_dir, pkl_name)
+        return pickling.load(glovar.PKL_DIR, pkl_name)
 
     def save(self):
-        global DBI
-        if DBI.history.train.exists(_id=self.name):
-            DBI.history.train.update(self.to_json())
-        else:
-            DBI.history.train.add(self.to_json())
+        pickling.save(self, glovar.PKL_DIR, 'history_%s.pkl' % self.name)
 
     def to_json(self):
         json = dict(self.__dict__)
