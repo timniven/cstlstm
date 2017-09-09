@@ -1,82 +1,6 @@
 """For tracking and saving training histories."""
 import numpy as np
-from ext import models
-from hsdbi import mongo
-
-
-# Mongo DB Interface
-
-
-class DbInterface(mongo.MongoFacade):
-    """For access to MongoDB for saving and loading histories."""
-
-    def __init__(self, server='localhost', port=27017):
-        """Create a new DbInterface.
-        Args:
-          server: String, the MongoDB server address.
-          port: Integer, the port for the MongoDB server.
-        """
-        super(DbInterface, self).__init__(server, port)
-        self.history = mongo.MongoDbFacade(
-            self.connection,
-            db_name='history',
-            collections=['train'])
-
-
-DBI = DbInterface()  # for now this works for me.
-
-
-# UTILITY FUNCTIONS
-
-
-def adapt(json):
-    """Adapt json to a History object.
-    Args:
-      json: Dictionary, history object loaded from MongoDB.
-    Returns:
-      histories.History object.
-    """
-    config = models.Config(**json['config'])
-    json.pop('config')
-    name = json['_id']
-    json.pop('_id')
-    history = History(name, config)
-    for key, value in json:
-        setattr(history, key, value)
-    return history
-
-
-def last_change(series):
-    """Get the change between the last two elements of a series.
-    Args:
-      series: a List of floats usually.
-    Returns:
-      Float.
-    """
-    # TO DO: test this out properly and see why the results are currently weird.
-    if len(series) == 0:
-        raise ValueError('Series has no elements.')
-    elif len(series) > 1:
-        return series[-1] - series[-2]
-    else:
-        return series[0]
-
-
-def load(name):
-    """Load a history from the MongoDB.
-    Args:
-      name: String, unique identifier for the history.
-    Returns:
-      histories.History object.
-    """
-    if not DBI.history.train.exists(_id=name):
-        raise ValueError('No history with name "%s"' % name)
-    json = DBI.history.train.get(_id=name)
-    history = adapt(json)
-    return history
-
-
-# History Class
+from ext import pickling
 
 
 class History:
@@ -117,10 +41,10 @@ class History:
         avg_time = np.average(self.epoch_times)
         self.epoch_losses.append(self.cum_epoch_loss)
         avg_loss = np.average(self.epoch_losses)
-        change_loss = last_change(self.epoch_losses)
+        change_loss = self.last_change(self.epoch_losses)
         self.epoch_accs.append(self.cum_epoch_acc)
         avg_acc = np.average(self.epoch_accs)
-        change_acc = last_change(self.epoch_accs)
+        change_acc = self.last_change(self.epoch_accs)
         is_best = avg_acc > self.best_epoch_acc
         if is_best:
             self.best_epoch_acc = avg_acc
@@ -145,8 +69,23 @@ class History:
     def end_tuning(self, accuracy):
         self.tuning_accs.append(accuracy)
         avg_acc = np.average(self.tuning_accs)
-        change_acc = last_change(self.tuning_accs)
+        change_acc = self.last_change(self.tuning_accs)
         return avg_acc, change_acc
+
+    @staticmethod
+    def last_change(series):
+        # TO DO: test this out properly and see why the results are weird.
+        if len(series) == 0:
+            raise ValueError('Series has no elements.')
+        elif len(series) > 1:
+            return series[-1] - series[-2]
+        else:
+            return series[0]
+
+    @staticmethod
+    def load(pkl_dir, name):
+        pkl_name = 'history_%s.pkl' % name
+        return pickling.load(pkl_dir, pkl_name)
 
     def save(self):
         global DBI

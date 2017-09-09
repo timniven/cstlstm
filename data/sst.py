@@ -142,3 +142,7 @@ class Stack:
         item = self.items[-1]
         del self.items[-1]
         return item
+
+
+def annotate():
+    pass
