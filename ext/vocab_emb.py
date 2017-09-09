@@ -23,13 +23,13 @@ def create_embeddings(vocab, emb_size, embedding_file_path):
         use.
 
     Returns:
-      embeddings, oov_countL 2D numpy.ndarray of shape vocab_size x emb_size,
-        Integer number of vocab items found to be OOV.
+      embeddings, oov: 2D numpy.ndarray of shape vocab_size x emb_size,
+        Dictionary of OOV vocab items.
     """
     print('Creating word embeddings from %s...' % embedding_file_path)
     vocab_size = max(vocab.values()) + 1
     print('vocab_size = %s' % vocab_size)
-    oov_count = vocab_size  # subtract as we find them
+    oov = dict(vocab)
     embeddings = np.random.normal(size=(vocab_size, emb_size))\
         .astype('float32', copy=False)
     with open(embedding_file_path, 'r', encoding='utf-8') as f:
@@ -39,7 +39,8 @@ def create_embeddings(vocab, emb_size, embedding_file_path):
                 s = [s[0]] + s[-300:]
                 assert len(s) == 301
             if s[0] in vocab.keys():
-                oov_count -= 1
+                if s[0] in oov.keys():  # seems we get some duplicate vectors.
+                    oov.pop(s[0])
                 try:
                     embeddings[vocab[s[0]], :] = np.asarray(s[1:])
                 except Exception as e:
@@ -51,8 +52,9 @@ def create_embeddings(vocab, emb_size, embedding_file_path):
                     print('vocab_max_val: %s' % max(vocab.values()))
                     raise e
     print('Success.')
-    print('OOV count = %s' % oov_count)
-    return embeddings, oov_count
+    print('OOV count = %s' % len(oov))
+    print(oov)
+    return embeddings, oov
 
 
 def create_vocab_dict(text):
