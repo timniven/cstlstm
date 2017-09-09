@@ -413,3 +413,27 @@ def sexpr_to_tree(sexpr):
             is_leaf=is_leaf))
 
     return Tree(nodes)
+
+
+# Combining text into internal nodes
+
+
+def combine_text_at_nodes(tree):
+    for l in reversed(range(tree.max_level + 1)):
+        nodes = tree.nodes[l]
+        for ix in range(len(nodes)):
+            node = nodes[ix]
+            # for lowest level, set text_at_node to the token
+            if l == tree.max_level:
+                node.text_at_node = node.token
+            # for higher levels, compose these strings
+            if l < tree.max_level:
+                node.text_at_node = node.token if node.token else ''
+                children = [tree.nodes[l+1][cix]
+                            for cix in tree.child_ixs[l][ix]]
+                sorted_nodes = sorted([node] + [c for c in children],
+                                      key=lambda x: x.id)
+                nodes_text = [n.text_at_node
+                              for n in sorted_nodes
+                              if n.text_at_node != '']
+                node.text_at_node = ' '.join([tok for tok in nodes_text])
