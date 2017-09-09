@@ -9,10 +9,12 @@ class History:
 
     def __init__(self, name, config=None):
         """Create a new History.
+
         Args:
           name: String, unique identifying name of the training run.
           config: coldnet.models.Config. If creating a new History object,
             this cannot be None.
+
         Raises:
           ValueError: if name is not found and config is None.
         """
@@ -75,13 +77,12 @@ class History:
 
     @staticmethod
     def last_change(series):
-        # TO DO: test this out properly and see why the results are weird.
         if len(series) == 0:
             raise ValueError('Series has no elements.')
-        elif len(series) > 1:
-            return series[-1] - series[-2]
-        else:
+        elif len(series) == 1:
             return series[0]
+        else:
+            return series[-1] - series[-2]
 
     @staticmethod
     def load(name):
