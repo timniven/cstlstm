@@ -1,9 +1,8 @@
-"""Model for sentiment analysis."""
+"""Model for sentiment analysis with the Stanford Sentiment Treebank."""
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
-from torch.autograd import Variable
+import numpy as np
 from cstlstm import encoder
 
 
@@ -17,9 +16,6 @@ class SentimentModel(nn.Module):
         self.config = config
         for key in config.keys():
             setattr(self, key, config[key])
-
-        # Define dropout layer for MLP.
-        self.drop_fc = nn.Dropout(p=1.0 - self.config.p_keep_fc).cuda()
 
         # Define embedding.
         self.embedding = nn.Embedding(
@@ -35,15 +31,14 @@ class SentimentModel(nn.Module):
             self.embed_size, self.hidden_size, self.embedding,
             self.p_keep_input, self.p_keep_rnn)
 
-        # Define MLP layers.
-        self.fc1 = nn.Linear(self.hidden_size, self.hidden_size).cuda()
-        self.fc2 = nn.Linear(self.hidden_size, self.hidden_size).cuda()
+        # Define linear classification layer.
         self.logits_layer = nn.Linear(self.hidden_size, 5).cuda()
+
+        # Define loss
+        self.criterion = torch.nn.CrossEntropyLoss().cuda()
 
         # Define optimizer.
         params = [{'params': self.encoder.cell.parameters()},
-                  {'params': self.fc1.parameters()},
-                  {'params': self.fc2.parameters()},
                   {'params': self.logits_layer.parameters()}]
         if self.tune_embeddings:
             params.append({'params': self.embeddings.parameters(),
@@ -51,48 +46,51 @@ class SentimentModel(nn.Module):
         self.optimizer = optim.Adam(params, lr=self.learning_rate)
 
         # Init params with xavier.
-        pass
+        raise NotImplementedError
 
     def accuracy(self, correct_predictions):
         correct = correct_predictions.cpu().sum().data.numpy()
         return correct / float(self.current_batch_size(self.batch))
 
+    @staticmethod
+    def annotated_encodings(encodings, annotation_ixs):
+        selected = []
+        for l in range(max(encodings.keys()) + 1):
+            selected += [encodings[l][i] for i in annotation_ixs[l]]
+        return torch.cat(selected, 0)
+
     def _biases(self):
         return [p for n, p in self.named_parameters() if n in ['bias']]
 
-    def correct_predictions(self, predictions, labels):
+    @staticmethod
+    def correct_predictions(predictions, labels):
         return predictions.eq(labels)
 
-    def forward(self, batch):
-        self.batch = batch
-        labels = Variable(
-            torch.from_numpy(batch.labels),
-            requires_grad=False).cuda()
-        logits = self.logits(batch)
+    def forward(self, forest):
+        labels = torch.from_numpy(np.array(forest.labels))
+        logits = self.logits(forest)
         loss = self.loss(logits, labels)
         predictions = self.predictions(logits).type_as(labels)
         correct = self.correct_predictions(predictions, labels)
         accuracy = self.accuracy(correct)[0]
         return predictions, loss, accuracy
 
-    def logits(self, batch):
-        encoded_sents = self.encoder.forward(batch.forest.nodes,
-                                             batch.forest.child_ixs)
-        h1 = self.drop_fc(F.relu(self.fc1(encoded_sents)))
-        h2 = self.drop_fc(F.relu(self.fc2(h1)))
-        logits = self.logits_layer(h2)
+    def logits(self, forest):
+        encodings = self.encoder.forward(forest)
+        annotated = self.annotated_encodings(encodings, forest.annotation_ixs)
+        logits = self.logits_layer(annotated)
         return logits
 
     def loss(self, logits, labels):
-        criterion = torch.nn.CrossEntropyLoss().cuda()  # move this fella out
-        loss = criterion(logits, labels)
+        loss = self.criterion(logits, labels)
         return loss
 
     def optimize(self, loss):
         loss.backward()
         self.optimizer.step()
 
-    def predictions(self, logits):
+    @staticmethod
+    def predictions(logits):
         return logits.max(1)[1]
 
     def _weights(self):

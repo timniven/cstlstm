@@ -6,10 +6,7 @@ from torch.autograd import Variable
 
 
 class ChildSumTreeLSTMEncoder(nn.Module):
-    """Child-Sum Tree-LSTM Encoder Module.
-
-    This module encodes sentences, returning hidden states for each sentence.
-    """
+    """Child-Sum Tree-LSTM Encoder Module."""
 
     def __init__(self, embed_size, hidden_size, embedding,
                  p_keep_input, p_keep_rnn):
@@ -25,22 +22,22 @@ class ChildSumTreeLSTMEncoder(nn.Module):
         super(ChildSumTreeLSTMEncoder, self).__init__()
 
         # Save local reference to the embedding
-        self.embedding = embedding
+        self._embedding = embedding
 
         # Define dropout layer for embedding lookup
-        self.drop_input = nn.Dropout(p=1.0 - p_keep_input)
+        self._drop_input = nn.Dropout(p=1.0 - p_keep_input)
 
         # Initialize the batch Child-Sum Tree-LSTM cell
-        self.cell = cell.BatchChildSumTreeLSTMCell(
+        self._cell = cell.BatchChildSumTreeLSTMCell(
             input_size=embed_size,
             hidden_size=hidden_size,
             p_dropout=1.0 - p_keep_rnn).cuda()
 
         # Initialize previous states (to get wirings from nodes on lower level)
-        self.prev_states = prev_states.PreviousStates(hidden_size)
+        self._prev_states = prev_states.PreviousStates(hidden_size)
 
-    def forward(self, nodes, up_wirings):
-        """Get encoded vectors for each sentence in the batch.
+    def forward(self, forest):
+        """Get encoded vectors for each node in the forest.
 
         Args:
           nodes: Dictionary of structure {Integer (level_index): List (nodes)}
@@ -52,40 +49,41 @@ class ChildSumTreeLSTMEncoder(nn.Module):
             on the lower level's node list, thus defining the upward wiring.
 
         Returns:
-          Tensor of shape 2 * batch_size x hidden_size.
+          Dictionary of hidden states for all nodes on all levels, indexed by
+            level number, with the list order following that of forest.nodes[l]
+            for each level, l.
         """
-        # Dictionary to hold the outputs of each level.
         outputs = {}
 
-        # Determine the max level in the forest.
-        max_level = max(nodes.keys())
-
         # Work backwards through level indices - i.e. bottom up.
-        for l in reversed(range(max_level + 1)):
+        for l in reversed(range(forest.max_level + 1)):
             # Get input word vectors for this level.
-            inputs = [(self.word2vec(n.vocab_ix) if n.token
-                       else self.prev_states.zero_vec())
-                      for n in nodes[l]]
+            inputs = [(self._word2vec(n.vocab_ix) if n.token
+                       else self._prev_states.zero_vec())
+                      for n in forest.nodes[l]]
 
             # Get previous hidden states for this level.
-            if l == max_level:
-                hidden_states = self.prev_states.zero_level(len(nodes[l]))
+            if l == forest.max_level:
+                hidden_states = self._prev_states.zero_level(
+                    len(forest.nodes[l]))
             else:
-                hidden_states = self.prev_states(
+                hidden_states = self._prev_states(
                     level=l,
-                    max_level=max_level,
-                    level_nodes=nodes[l],
-                    level_up_wirings=up_wirings[l],
+                    max_level=forest.max_level,
+                    level_nodes=forest.nodes[l],
+                    level_up_wirings=forest.up_wirings[l],
                     prev_outputs=outputs[l+1])
 
-            # Calculate the new outputs and store for subsequent processing.
-            outputs[l] = self.cell(inputs, hidden_states)
-        return outputs[0][1]
+            outputs[l] = self._cell(inputs, hidden_states)
 
-    def word2vec(self, vocab_ix):
+        return outputs
+
+    def _word2vec(self, vocab_ix):
         lookup_tensor = Variable(
             torch.LongTensor([vocab_ix]),
             requires_grad=False).cuda()
-        word_vec = self.embeddings(lookup_tensor).type(torch.FloatTensor).cuda()
-        word_vec = self.drop_input(word_vec)
+        word_vec = self._embeddings(lookup_tensor)\
+            .type(torch.FloatTensor)\
+            .cuda()
+        word_vec = self._drop_input(word_vec)
         return word_vec

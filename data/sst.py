@@ -24,17 +24,18 @@ def annotate_data():
         sst_set = sst_trees[dataset]
         for i in range(len(dep_set)):
             compare_and_annotate(sst_set[i], dep_set[i])
+            # report every so often to check integrity
+            if i % 100 == 0:
+                print('ORIGINAL')
+                for node in sst_set[i].node_list:
+                    print('%s\t%s\t%s' % (node.id, node.tag, node.text_at_node))
+                print('DEP')
+                for node in dep_set[i].node_list:
+                    print('%s\t%s\t%s' % (
+                        node.id, node.annotation, node.text_at_node))
     # save a pickle
     pickling.save(dep_trees, glovar.PKL_DIR, 'annotated_dep_trees.pkl')
     return dep_trees
-
-
-class Batch:
-    """Batch object for this data."""
-
-    def __init__(self, forest, labels):
-        self.forest = forest
-        self.labels = labels
 
 
 def compare_and_annotate(sst_tree, dep_tree):
@@ -52,9 +53,6 @@ def compare_and_annotate(sst_tree, dep_tree):
                     match = dep_doc[i].text == sst_doc[i].text
                     i += 1
                 if match:
-                    print('Matching %s and %s with annotation %s' %
-                          (dep_node.text_at_node, sst_node.text_at_node,
-                           sst_node.tag))
                     dep_node.annotation = sst_node.tag
 
 
@@ -161,30 +159,38 @@ class SSTDataset(dataset.Dataset):
     def __len__(self):
         return self.len
 
+    @staticmethod
+    def annotation_ixs(forest):
+        ixs = {}
+        for l in range(forest.max_level + 1):
+            l_nodes = forest.nodes[l]
+            l_ixs = [i for i in range(len(l_nodes)) if l_nodes[i].annotation]
+            ixs[l] = l_ixs
+        return ixs
+
     def collate(self, batch_data):
         """For collating a batch of trees.
 
         Args:
-          batch_data: List of JSON objects.
+          batch_data: List of tree_batch.Tree.
 
         Returns:
-          Batch object wrapping the labels and forest.
+          tree_batch.Forest.
         """
-        # Get the labels, and convert text to SpaCy docs.
-        labels = np.array([s['label'] for s in batch_data])
-        sents = [NLP(s['text'] for s in batch_data)]
+        forest = tree_batch.Forest(batch_data)
+        forest.labels = []
 
-        # Generate the forest.
-        trees = [tree_batch.sent_to_tree(s) for s in sents]
-        forest = tree_batch.Forest(trees)
+        # Setting annotation_ixs here necessary downstream and for labels
+        forest.annotation_ixs = self.annotation_ixs(forest)
 
-        # Pre-emptively perform dictionary lookup to save time.
-        for level in range(forest.max_level + 1):
-            for node in forest.nodes[level]:
+        # Get labels and pre-emptively perform dictionary lookup.
+        for l in range(forest.max_level + 1):
+            forest.labels += [forest.nodes[l][i]
+                              for i in forest.annotation_ixs[l]]
+            for node in [n for n in forest.nodes[l] if n.token]:
                 node.vocab_ix = self.vocab_dict[node.token]
 
-        # Wrap up a batch object and return.
-        return Batch(forest, labels)
+        return forest
 
 
 class Stack:
