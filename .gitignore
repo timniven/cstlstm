@@ -99,7 +99,7 @@ ENV/
 # Project specific
 graphs/
 logs/
-checkpoints/
+ckpts/
 histories/
 pickles/
 main.py

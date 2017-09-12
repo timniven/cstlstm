@@ -8,27 +8,26 @@ from torch.autograd import Variable
 class ChildSumTreeLSTMEncoder(nn.Module):
     """Child-Sum Tree-LSTM Encoder Module."""
 
-    def __init__(self, embed_size, hidden_size, embedding,
+    def __init__(self, embed_size, hidden_size, embeddings,
                  p_keep_input, p_keep_rnn):
         """Create a new ChildSumTreeLSTMEncoder.
 
         Args:
           embed_size: Integer, number of units in word embeddings vectors.
           hidden_size: Integer, number of units in hidden state vectors.
-          embedding: torch.nn.Embedding.
+          embeddings: torch.nn.Embedding.
           p_keep_input: Float, the probability of keeping an input unit.
           p_keep_rnn: Float, the probability of keeping an rnn unit.
         """
         super(ChildSumTreeLSTMEncoder, self).__init__()
 
-        # Save local reference to the embedding
-        self._embedding = embedding
+        self._embeddings = embeddings
 
         # Define dropout layer for embedding lookup
         self._drop_input = nn.Dropout(p=1.0 - p_keep_input)
 
         # Initialize the batch Child-Sum Tree-LSTM cell
-        self._cell = cell.BatchChildSumTreeLSTMCell(
+        self.cell = cell.BatchChildSumTreeLSTMCell(
             input_size=embed_size,
             hidden_size=hidden_size,
             p_dropout=1.0 - p_keep_rnn).cuda()
@@ -68,13 +67,11 @@ class ChildSumTreeLSTMEncoder(nn.Module):
                     len(forest.nodes[l]))
             else:
                 hidden_states = self._prev_states(
-                    level=l,
-                    max_level=forest.max_level,
                     level_nodes=forest.nodes[l],
-                    level_up_wirings=forest.up_wirings[l],
+                    level_up_wirings=forest.child_ixs[l],
                     prev_outputs=outputs[l+1])
 
-            outputs[l] = self._cell(inputs, hidden_states)
+            outputs[l] = self.cell(inputs, hidden_states)
 
         return outputs
 

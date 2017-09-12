@@ -27,13 +27,16 @@ def pretty_time(secs):
 
 def _print_dividing_lines():
     # For visuals, when reporting results to terminal.
-    print('------\t\t------\t\t------\t\t------\t\t------')
+    print('--------\t  ----------------\t------------------'
+          '\t--------\t--------')
 
 
 def _print_epoch_start(epoch):
     _print_dividing_lines()
-    print('Epoch %s\t\tloss\t(avg.)\t\tacc\t(avg.)\tt(avg.)\t\tremaining'
+    print('Epoch %s \t       loss       \t     accuracy     '
+          '\tt(avg.)\t\tremaining'
           % epoch)
+    print('        \t  last      avg.  \t  last      avg.  \t       \t')
     _print_dividing_lines()
 
 
@@ -100,7 +103,7 @@ class TrainerBase:
 
     def _report_epoch(self, avg_time, change_loss, change_acc):
         _print_dividing_lines()
-        print('\t\t\t%s%10.5f\t\t%s%6.4f%%\t%s\t'
+        print('\t\t  %s%10.5f\t\t%s%6.4f%%\t\t%s\t'
               % ('+' if change_loss > 0 else '',
                  change_loss,
                  '+' if change_acc > 0 else '',
@@ -114,10 +117,8 @@ class TrainerBase:
     def _report_step(self, global_step, loss, avg_loss, acc, avg_acc, avg_time):
         if global_step % self.report_every == 0:
             print('%s%%:\t\t'
-                  '%8.5f\t'
-                  '%8.5f\t'
-                  '%6.4f%%\t'
-                  '%6.4f%%\t'
+                  '%8.4f  %8.4f\t'
+                  '%6.4f%%  %6.4f%%\t'
                   '%s\t'
                   '%s'
                   % (self.progress_percent,

@@ -50,6 +50,13 @@ class Config:
     def __getitem__(self, key):
         return self.__getattribute__(key)
 
+    def __repr__(self):
+        x = 'Config as follows:\n'
+        for key in sorted(self.keys()):
+            x += '\t%s \t%s%s\n' % \
+                 (key, '\t' if len(key) < 15 else '', self[key])
+        return x
+
     def __setitem__(self, key, value):
         self.__setattr__(key, value)
 

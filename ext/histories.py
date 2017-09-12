@@ -1,7 +1,25 @@
 """For tracking and saving training histories."""
 import numpy as np
-from ext import pickling
+from ext import pickling, models
 import glovar
+import os
+
+
+def get(pkl_dir, name, override, arg_config):
+    print('Getting history with name %s; override=%s...' % (name, override))
+    pkl_name = 'history_%s.pkl'
+    exists = os.path.exists(os.path.join(pkl_dir, pkl_name))
+    print('Exists: %s' % exists)
+    if exists:
+        if override:
+            print('Overriding...')
+            return History(name, models.Config(**arg_config))
+        else:
+            print('Loading...')
+            return pickling.load(pkl_dir, pkl_name)
+    else:
+        print('Creating...')
+        return History(name, models.Config(**arg_config))
 
 
 class History:

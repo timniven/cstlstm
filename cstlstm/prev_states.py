@@ -50,9 +50,9 @@ class PreviousStates:
         return prev_out.index_select(0, selector)
 
     def states(self, level_nodes, level_length, prev_out, child_ixs_level):
-        return [(self.zero_vec() if level_nodes[i].is_leaf
-                                 else self.children(prev_out,
-                                                    child_ixs_level[i]))
+        return [(self.zero_vec()
+                 if (level_nodes[i].is_leaf or len(child_ixs_level[i]) == 0)
+                 else self.children(prev_out, child_ixs_level[i]))
                 for i in range(level_length)]
 
     def zero_level(self, level_length):

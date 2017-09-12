@@ -152,6 +152,7 @@ class SSTDataset(dataset.Dataset):
         super(SSTDataset, self).__init__()
         self.data = list(data)
         self.len = len(self.data)
+        self.vocab_dict = vocab_dict
 
     def __getitem__(self, index):
         return self.data[index]
@@ -185,7 +186,7 @@ class SSTDataset(dataset.Dataset):
 
         # Get labels and pre-emptively perform dictionary lookup.
         for l in range(forest.max_level + 1):
-            forest.labels += [forest.nodes[l][i]
+            forest.labels += [int(forest.nodes[l][i].annotation)
                               for i in forest.annotation_ixs[l]]
             for node in [n for n in forest.nodes[l] if n.token]:
                 node.vocab_ix = self.vocab_dict[node.token]
