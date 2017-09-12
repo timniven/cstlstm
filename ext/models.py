@@ -1,4 +1,6 @@
 """Base classes for models."""
+import torch
+from torch import nn
 
 
 FRAMEWORKS = ['tf', 'torch']
@@ -114,3 +116,63 @@ class Model:
 
     def predictions(self, *args):
         raise NotImplementedError
+
+
+class PyTorchModel(Model, nn.Module):
+    """Base for a PyTorch model."""
+
+    def __init__(self, name, config, embedding_matrix):
+        Model.__init__(self, 'pytorch', config)
+        nn.Module.__init__(self)
+
+        self.name = name
+
+        # Define embedding.
+        self.embedding = nn.Embedding(
+            embedding_matrix.shape[0], embedding_matrix.shape[1], sparse=False)
+        embedding_tensor = torch.from_numpy(embedding_matrix)
+        self.embedding.weight = nn.Parameter(
+            embedding_tensor,
+            requires_grad=self.tune_embeddings)
+        self.embedding.cuda()
+
+        # Define loss
+        self.criterion = torch.nn.CrossEntropyLoss().cuda()
+
+    @staticmethod
+    def accuracy(correct_predictions, batch_size):
+        # batch_size may vary - i.e. the last batch of the data set.
+        correct = correct_predictions.cpu().sum().data.numpy()
+        return correct / float(batch_size)
+
+    def _biases(self):
+        return [p for n, p in self.named_parameters() if n in ['bias']]
+
+    @staticmethod
+    def correct_predictions(predictions, labels):
+        return predictions.eq(labels)
+
+    def forward(self, forest):
+        # Need to return predictions, loss, accuracy
+        raise NotImplementedError
+
+    def logits(self, forest):
+        raise NotImplementedError
+
+    def loss(self, logits, labels):
+        loss = self.criterion(logits, labels)
+        return loss
+
+    def optimize(self, loss):
+        loss.backward()
+        self.optimizer.step()
+
+    @staticmethod
+    def predictions(logits):
+        return logits.max(1)[1]
+
+    def _weights(self):
+        return [p for n, p in self.named_parameters() if n in ['weight']]
+
+    def zero_grad(self):
+        self.optimizer.zero_grad()
