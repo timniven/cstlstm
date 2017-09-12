@@ -1,7 +1,6 @@
 """For handling the Stanford Sentiment Treebank data."""
 from nltk.tokenize import sexpr
 from torch.utils.data import dataset, dataloader
-import numpy as np
 import spacy
 from ext import tree_batch, pickling
 import glovar

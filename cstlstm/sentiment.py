@@ -41,6 +41,10 @@ class SentimentModel(models.PyTorchModel):
             selected += [encodings[l][1][i] for i in annotation_ixs[l]]
         return torch.stack(selected, 0)
 
+    @staticmethod
+    def current_batch_size(forest):
+        return len(forest.labels)
+
     def forward(self, forest):
         labels = Variable(
             torch.from_numpy(np.array(forest.labels)),
@@ -49,7 +53,7 @@ class SentimentModel(models.PyTorchModel):
         loss = self.loss(logits, labels)
         predictions = self.predictions(logits).type_as(labels)
         correct = self.correct_predictions(predictions, labels)
-        accuracy = self.accuracy(correct, len(forest.labels))[0]
+        accuracy = self.accuracy(correct, self.current_batch_size(forest))[0]
         return predictions, loss, accuracy
 
     def logits(self, forest):
