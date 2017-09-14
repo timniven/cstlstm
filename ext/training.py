@@ -207,6 +207,7 @@ class PyTorchTrainer(TrainerBase):
         file_path = self.ckpt_path(False)
         torch.save(self.model.state_dict(), file_path)
         if is_best:
+            print('Saving checkpoint with new best tuning accuracy...')
             file_path = self.ckpt_path(True)
             torch.save(self.model.state_dict(), file_path)
 
