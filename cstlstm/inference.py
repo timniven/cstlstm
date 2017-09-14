@@ -20,13 +20,16 @@ class InferenceModel(models.PyTorchModel):
             self.embed_size, self.hidden_size, self.embedding,
             self.p_keep_input, self.p_keep_rnn)
 
+        # Define dropouts
+        self.drop_fc = nn.Dropout(p=1.0 - self.p_keep_fc)
+
         # Define MLP
         self.fc1 = nn.Linear(self.hidden_size * 4, self.hidden_size).cuda()
         self.fc2 = nn.Linear(self.hidden_size, self.hidden_size).cuda()
         self.logits_layer = nn.Linear(self.hidden_size, 3).cuda()
 
         # Define optimizer
-        params = [{'params': self.cell.parameters()},
+        params = [{'params': self.encoder.cell.parameters()},
                   {'params': self.fc1.parameters()},
                   {'params': self.fc2.parameters()},
                   {'params': self.logits_layer.parameters()}]
@@ -35,14 +38,14 @@ class InferenceModel(models.PyTorchModel):
                            'lr': self.learning_rate / 10.})  # Avoid overfitting
         self.optimizer = optim.Adam(params, lr=self.learning_rate)
 
-        # Initialize patameters
+        # Initialize parameters
         nn.init.xavier_uniform(self.fc1.weight.data, gain=np.sqrt(2.0))
         nn.init.xavier_uniform(self.fc2.weight.data, gain=np.sqrt(2.0))
         nn.init.xavier_uniform(self.logits_layer.weight.data, gain=1.)
 
     @staticmethod
     def current_batch_size(forest):
-        return len(forest.node_list[0]) / 2
+        return int(len(forest.nodes[0]) / 2)
 
     def forward(self, forest):
         labels = Variable(

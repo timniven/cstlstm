@@ -57,7 +57,7 @@ class ChildSumTreeLSTMEncoder(nn.Module):
         # Work backwards through level indices - i.e. bottom up.
         for l in reversed(range(forest.max_level + 1)):
             # Get input word vectors for this level.
-            inputs = [(self._word2vec(n.vocab_ix) if n.token
+            inputs = [(self._word_vec(n.vocab_ix) if n.token
                        else self._prev_states.zero_vec())
                       for n in forest.nodes[l]]
 
@@ -75,7 +75,7 @@ class ChildSumTreeLSTMEncoder(nn.Module):
 
         return outputs
 
-    def _word2vec(self, vocab_ix):
+    def _word_vec(self, vocab_ix):
         lookup_tensor = Variable(
             torch.LongTensor([vocab_ix]),
             requires_grad=False).cuda()

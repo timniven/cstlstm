@@ -1,19 +1,21 @@
 """For pre-processing the data."""
 from ext import vocab_emb, pickling
-from data import sst
+from data import sst, nli
 import glovar
 import os
 
 
 if not os.path.exists(glovar.PKL_DIR):
     os.makedirs(glovar.PKL_DIR)
+if not os.path.exists(glovar.CKPT_DIR):
+    os.makedirs(glovar.CKPT_DIR)
 
 
 # Create the vocab dictionary
 print('Creating vocab dict...')
-data = sst.parsed_data()
-all_data = data['train'] + data['dev'] + data['test']
-all_text = ' '.join([s['text'] for s in all_data])
+sst_text = sst.get_text()
+nli_text = nli.get_text()
+all_text = ' '.join([sst_text, nli_text])
 vocab_dict, _ = vocab_emb.create_vocab_dict(all_text)
 pickling.save(vocab_dict, glovar.PKL_DIR, 'vocab_dict.pkl')
 print('Success.')

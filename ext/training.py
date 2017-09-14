@@ -172,6 +172,7 @@ class TrainerBase:
             cum_acc += acc
         tuning_acc = cum_acc / len(tune_loader)
         avg_acc, change_acc = self.history.end_tuning(tuning_acc)
+        print('Tuning accuracy: %5.3f%%' % tuning_acc)
         print('Average tuning accuracy: %5.3f%% (%s%5.3f%%)' %
               (avg_acc * 100,
                '+' if change_acc > 0 else '',

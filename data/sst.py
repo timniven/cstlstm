@@ -120,6 +120,14 @@ def get_sst_trees(raw_data):
     return sst_trees
 
 
+def get_text():
+    sst_raw = get_raw_data()
+    sst_parsed = get_parsed_data(sst_raw)
+    sst_data = sst_parsed['train'] + sst_parsed['dev'] + sst_parsed['test']
+    sst_text = ' '.join([s['text'] for s in sst_data])
+    return sst_text
+
+
 def load_vocab_dict():
     return pickling.load(glovar.PKL_DIR, 'vocab_dict.pkl')
 
