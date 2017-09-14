@@ -3,10 +3,6 @@ import numpy as np
 from nltk.tokenize import sexpr
 
 
-# Utility Functions
-# 140035c - put the sample into here, test it, find the bug
-# also need to run validation over entire MNLI set
-
 def cumsum(seq):
     """Get the cumulative sum of a sequence of sequences at each index.
 

@@ -79,7 +79,7 @@ class TrainerBase:
         time_taken = self._epoch_end - self._epoch_start
         avg_time, avg_loss, change_loss, avg_acc, change_acc, is_best = \
             self.history.end_epoch(time_taken)
-        self._report_epoch(avg_time, avg_loss, change_loss)
+        self._report_epoch(avg_time)
         self._checkpoint(is_best)
         self.history.save()
 
@@ -101,14 +101,10 @@ class TrainerBase:
         rounded = int(np.ceil(percent / 10.0) * 10)
         return rounded
 
-    def _report_epoch(self, avg_time, change_loss, change_acc):
+    def _report_epoch(self, avg_time):
         _print_dividing_lines()
-        print('\t\t  %s%10.5f\t\t%s%6.4f%%\t\t%s\t'
-              % ('+' if change_loss > 0 else '',
-                 change_loss,
-                 '+' if change_acc > 0 else '',
-                 change_acc,
-                 pretty_time(np.average(avg_time))))
+        print('\t\t\t\t\t\t\t%s'
+              % pretty_time(np.average(avg_time)))
 
     @property
     def report_every(self):

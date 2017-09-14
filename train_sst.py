@@ -1,9 +1,8 @@
 """Train Child-Sum Tree-LSTM model on the Stanford Sentiment Treebank."""
-from data import sst
-from cstlstm import sentiment
-from ext import parameters, pickling, training, histories
 import glovar
-
+from data import sst
+from ext import parameters, pickling, training, histories
+from models import sentiment
 
 # Parse configuration settings from command line
 params, arg_config = parameters.parse_arguments()

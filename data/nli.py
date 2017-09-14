@@ -1,10 +1,12 @@
 """For handling Natural Language Inference data."""
-import glovar
 import json
-from torch.utils.data import dataset, dataloader
 import random
-from ext import NLP, tree_batch
 
+from torch.utils.data import dataset, dataloader
+
+import glovar
+from cstlstm import tree_batch
+from ext import NLP
 
 LABEL_MAP = {
     "entailment": 0,

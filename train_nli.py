@@ -1,9 +1,8 @@
 """For training on NLI data."""
+import glovar
 from data import nli
 from ext import parameters, histories, pickling, training
-from cstlstm import inference
-import glovar
-
+from models import inference
 
 # Parse configuration settings from command line
 params, arg_config = parameters.parse_arguments()

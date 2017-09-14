@@ -1,11 +1,13 @@
 """For handling the Stanford Sentiment Treebank data."""
-from nltk.tokenize import sexpr
-from torch.utils.data import dataset, dataloader
-import spacy
-from ext import tree_batch, pickling
-import glovar
 import os
 
+import spacy
+from nltk.tokenize import sexpr
+from torch.utils.data import dataset, dataloader
+
+import glovar
+from cstlstm import tree_batch
+from ext import pickling
 
 NLP = spacy.load('en')
 SST_DIR = os.path.join(glovar.DATA_DIR, 'sst/')
