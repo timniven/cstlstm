@@ -220,3 +220,28 @@ class PyTorchTrainer(TrainerBase):
         _, loss, acc = self.model.forward(batch)
         self.model.optimize(loss)
         return loss.cpu().data.numpy()[0], acc
+
+
+class Saver:
+    """For loading and saving models."""
+
+    def __init__(self, ckpt_dir):
+        self.ckpt_dir = ckpt_dir
+
+    def ckpt_path(self, name, is_best):
+        return os.path.join(
+            self.ckpt_dir,
+            '%s_%s' % (name, 'best' if is_best else 'latest'))
+
+    def load(self, model, name, is_best):
+        path = self.ckpt_path(name, is_best)
+        print('Loading checkpoint at %s...' % path)
+        model.load_state_dict(torch.load(path))
+
+    def save(self, model, name, is_best):
+        path = self.ckpt_path(name, is_best)
+        torch.save(model.state_dict(), path)
+        if is_best:
+            print('Checkpointing with new best accuracy...')
+            path = self.ckpt_path(name, is_best=True)
+            torch.save(model.state_dict(), path)
