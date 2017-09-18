@@ -21,6 +21,14 @@ def parse_arguments():
     parser.add_argument('--tune_embeddings',
                         action='store_true',
                         help='Set true to tune embeddings.')
+    parser.add_argument('--train_subset',
+                        type=int,
+                        help='Size of subset to select from training data.',
+                        default=None)
+    parser.add_argument('--train_subset',
+                        type=int,
+                        help='Size of subset to select from tuning data.',
+                        default=None)
     arg_config = {}
     for key in [k for k in base_config.keys() if k != 'tune_embeddings']:
         parser.add_argument(

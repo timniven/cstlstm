@@ -28,8 +28,9 @@ print('Loading data...')
 mnli_train = nli.load_json('mnli', 'train')
 snli_train = nli.load_json('snli', 'train')
 mnli_dev_matched = nli.load_json('mnli', 'dev_matched')
-train_data = nli.NYUDataSet(mnli_train, snli_train, vocab_dict)
-tune_data = nli.NLIDataSet(mnli_dev_matched, vocab_dict)
+train_data = nli.NYUDataSet(
+    mnli_train, snli_train, vocab_dict, params.train_subset)
+tune_data = nli.NLIDataSet(mnli_dev_matched, vocab_dict, params.tune_subset)
 train_loader = nli.get_data_loader(train_data, config.batch_size)
 dev_loader = nli.get_data_loader(tune_data, config.batch_size)
 
