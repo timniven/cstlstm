@@ -58,16 +58,18 @@ def load_json(db, coll):
 class NLIDataSet(dataset.Dataset):
     def __init__(self, data, vocab_dict, subset_size=None):
         super(NLIDataSet, self).__init__()
-        self._original_data = data
+        self.data = data
         self.subset_size = subset_size
         self.vocab_dict = vocab_dict
         self._prepare_epoch()
-        self.len = len(self.data)
+        self.len = len(self.epoch_data)
 
     def __getitem__(self, index):
-        item = self.data[index]
+        item = self.epoch_data[index]
         if index == self.len - 1:
             self._prepare_epoch()
+            self._subsample()
+            random.shuffle(self.epoch_data)
         return item
 
     def __len__(self):
@@ -87,21 +89,23 @@ class NLIDataSet(dataset.Dataset):
             node.vocab_ix = self.vocab_dict[node.token]
         return forest
 
-    def _prepare_epoch(self):
+    def _subsample(self):
         if self.subset_size:
-            self.data = random.sample(self._original_data, self.subset_size)
-        else:
-            self.data = self._original_data
+            self.epoch_data = random.sample(self.epoch_data, self.subset_size)
+
+    def _prepare_epoch(self):
+        self.epoch_data = self.data
 
 
 class NYUDataSet(NLIDataSet):
-    def __init__(self, mnli_train, snli_train, vocab_dict, alpha=0.15):
+    def __init__(self, mnli_train, snli_train, vocab_dict,
+                 subset_size=None, alpha=0.15):
         self.mnli_train = mnli_train
         self.snli_train = snli_train
         self.alpha = alpha
         self.n_snli = int(len(snli_train) * alpha)
-        super(NYUDataSet, self).__init__([], vocab_dict)
+        super(NYUDataSet, self).__init__([], vocab_dict, subset_size)
 
     def _prepare_epoch(self):
-        self.data = self.mnli_train + random.sample(
+        self.epoch_data = self.mnli_train + random.sample(
             self.snli_train, self.n_snli)
