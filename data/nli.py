@@ -62,6 +62,8 @@ class NLIDataSet(dataset.Dataset):
         self.subset_size = subset_size
         self.vocab_dict = vocab_dict
         self._prepare_epoch()
+        self._subsample()
+        random.shuffle(self.epoch_data)
         self.len = len(self.epoch_data)
 
     def __getitem__(self, index):

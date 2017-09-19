@@ -15,7 +15,7 @@ class BatchChildSumTreeLSTMCell(nn.Module):
         \begin{array}{ll}
           \tilde{h_j} = \sum_{k \in C(j)} h_k \\
           i_j = \mathrm{sigmoid}(W^{(i)} x_j + U^{(i)} \tilde{h}_j + b^{(i)}) \\
-          f_{jk} = \mathrm{sigmoid}(W^{(f)} x_j + U^{(f)} h_k + b^{(f)} \\
+          f_{jk} = \mathrm{sigmoid}(W^{(f)} x_j + U^{(f)} h_k + b^{(f)}) \\
           o_j = \mathrm{sigmoid}(W^{(o)} x_j + U^{(o)} \tilde{h}_j + b^{(o)}) \\
           u_j = \tanh(W^{(u)} x_j + U^{(u)} \tilde{h}_j + b^{(u)}) \\
           c_j = i_j \circ u_j + \sum_{k \in C(j)} f_{jk} \circ c_k \\
@@ -45,7 +45,7 @@ class BatchChildSumTreeLSTMCell(nn.Module):
             torch.Tensor(input_size, hidden_size),
             requires_grad=True)
         self.U_f = nn.Parameter(
-            torch.Tensor(input_size, hidden_size),
+            torch.Tensor(hidden_size, hidden_size),
             requires_grad=True)
         self.b_f = nn.Parameter(
             torch.zeros(1, hidden_size),
